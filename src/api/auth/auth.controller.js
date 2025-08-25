@@ -9,6 +9,8 @@ exports.googleAuth = (req, res) => {
   const defaultScopes = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/youtube.readonly',
   ];
 
   // Get scopes from query parameter, e.g., ?scopes=drive.file,sheets.readonly
@@ -39,8 +41,8 @@ exports.googleAuthCallback = async (req, res) => {
 
     console.log('Tokens received and stored:', tokens);
 
-    // Redirect to a frontend page, perhaps with a success message or user info
-    res.redirect('/auth/success'); // Frontend will handle this redirect
+    // Redirect to the frontend application's base URL
+    res.redirect('http://localhost:5174/'); // Assuming frontend runs on 5174
   } catch (error) {
     console.error('Error retrieving access token:', error.message);
     res.status(500).send('Authentication failed');
@@ -60,4 +62,10 @@ exports.setCredentialsForClient = (userId) => {
     return true;
   }
   return false;
+};
+
+exports.checkAuthStatus = (req, res) => {
+  // If this endpoint is reached, it means the authenticate middleware passed.
+  // So, the user is authenticated.
+  res.status(200).send({ authenticated: true });
 };

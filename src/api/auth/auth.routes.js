@@ -11,4 +11,7 @@ router.get('/success', (req, res) => {
   res.send('Authentication successful! You can close this tab and return to the application.');
 });
 
+const authenticate = require('../../middleware/auth'); // Import authenticate middleware
+router.get('/status', authenticate, authController.checkAuthStatus);
+
 module.exports = router;

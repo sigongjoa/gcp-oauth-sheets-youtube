@@ -6,7 +6,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5174', // Allow requests from your frontend origin
+  credentials: true, // Allow cookies to be sent
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
