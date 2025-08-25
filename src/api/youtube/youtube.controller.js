@@ -44,6 +44,16 @@ const getYouTubeClient = (userId) => {
   return google.youtube({ version: 'v3', auth: oauth2Client });
 };
 
+// Helper to get a configured YouTube Analytics API client for a user
+const getYouTubeAnalyticsClient = (userId) => {
+  const tokens = getTokensForUser(userId);
+  if (!tokens) {
+    throw new Error('User not authenticated.');
+  }
+  oauth2Client.setCredentials(tokens);
+  return google.youtubeAnalytics({ version: 'v2', auth: oauth2Client });
+};
+
 exports.uploadVideo = [upload.single('video'), async (req, res) => {
   try {
     const userId = req.userId;
@@ -238,5 +248,58 @@ exports.analyzeVideo = async (req, res) => {
   } catch (error) {
     console.error('Error analyzing video:', error.message);
     res.status(500).send('Failed to analyze video.');
+  }
+};
+
+exports.getVideoAnalyticsMetrics = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).send('Unauthorized: User ID not found.');
+    }
+
+    const youtubeAnalytics = getYouTubeAnalyticsClient(userId);
+    const youtubeData = getYouTubeClient(userId); // For fetching channel ID
+
+    const { videoId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (!videoId || !startDate || !endDate) {
+      return res.status(400).send('Video ID, start date, and end date are required.');
+    }
+
+    // Get channel ID for the authenticated user
+    let channelId;
+    try {
+      const channelResponse = await youtubeData.channels.list({
+        part: 'id',
+        mine: true,
+      });
+      if (channelResponse.data.items.length > 0) {
+        channelId = channelResponse.data.items[0].id;
+      } else {
+        return res.status(404).send('Channel ID not found for the authenticated user.');
+      }
+    } catch (channelError) {
+      console.error('Error fetching channel ID:', channelError.message);
+      return res.status(500).send('Failed to fetch channel ID.');
+    }
+
+    const metrics = 'averageViewDuration,audienceWatchRatio'; // Metrics to retrieve
+    const dimensions = 'video'; // Dimension to filter by video
+
+    const response = await youtubeAnalytics.reports.query({
+      ids: `channel==${channelId}`,
+      startDate: startDate,
+      endDate: endDate,
+      metrics: metrics,
+      dimensions: dimensions,
+      filters: `video==${videoId}`,
+    });
+
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error fetching video analytics metrics:', error.message);
+    res.status(500).send('Failed to fetch video analytics metrics.');
   }
 };

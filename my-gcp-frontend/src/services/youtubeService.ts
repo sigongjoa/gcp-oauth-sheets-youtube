@@ -46,6 +46,17 @@ const youtubeService = {
     const response = await api.get(`/api/youtube/videos/${videoId}/analyze`);
     return response.data;
   },
+
+  // New function for video analytics metrics
+  getVideoAnalyticsMetrics: async (videoId: string, startDate: string, endDate: string) => {
+    const response = await api.get(`/api/youtube/videos/${videoId}/analytics`, {
+      params: {
+        startDate,
+        endDate,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default youtubeService;

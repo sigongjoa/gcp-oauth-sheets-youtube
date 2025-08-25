@@ -18,6 +18,7 @@ function YouTubePage() {
   // State for video analysis modal
   const [selectedVideoForAnalysis, setSelectedVideoForAnalysis] = useState<any | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState<boolean>(false);
+  const [videoAnalyticsData, setVideoAnalyticsData] = useState<any | null>(null);
 
   const requiredScope = 'youtube'; // Corresponds to https://www.googleapis.com/auth/youtube
 
@@ -113,7 +114,17 @@ function YouTubePage() {
     try {
       setMessage('Fetching video analysis...');
       const analysisData = await youtubeService.getVideoAnalysis(videoId);
+
+      // Fetch analytics metrics
+      const today = new Date();
+      const endDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30));
+      const startDate = thirtyDaysAgo.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const analyticsMetrics = await youtubeService.getVideoAnalyticsMetrics(videoId, startDate, endDate);
+
       setSelectedVideoForAnalysis(analysisData);
+      setVideoAnalyticsData(analyticsMetrics);
       setIsAnalysisModalOpen(true);
       setMessage('Video analysis loaded.');
     } catch (error: any) {
@@ -125,6 +136,7 @@ function YouTubePage() {
   const handleCloseAnalysisModal = () => {
     setIsAnalysisModalOpen(false);
     setSelectedVideoForAnalysis(null);
+    setVideoAnalyticsData(null);
   };
 
   return (
@@ -249,6 +261,15 @@ function YouTubePage() {
             <p><strong>Comments:</strong> {selectedVideoForAnalysis.statistics?.commentCount || 'N/A'}</p>
             <p><strong>Privacy Status:</strong> {selectedVideoForAnalysis.status?.privacyStatus || 'N/A'}</p>
             <p><strong>Tags:</strong> {selectedVideoForAnalysis.snippet.tags?.join(', ') || 'N/A'}</p>
+
+            {videoAnalyticsData && videoAnalyticsData.rows && videoAnalyticsData.rows.length > 0 && (
+              <>
+                <h3>Analytics Metrics (Last 30 Days)</h3>
+                <p><strong>Average View Duration:</strong> {videoAnalyticsData.rows[0][0]} seconds</p>
+                <p><strong>Audience Watch Ratio:</strong> {(parseFloat(videoAnalyticsData.rows[0][1]) * 100).toFixed(2)}%</p>
+              </>
+            )}
+
             <button onClick={handleCloseAnalysisModal}>Close</button>
           </div>
         </div>

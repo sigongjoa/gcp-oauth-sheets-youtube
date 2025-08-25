@@ -13,6 +13,7 @@ exports.googleAuth = (req, res) => {
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/documents',
+    'https://www.googleapis.com/auth/yt-analytics.readonly',
   ];
 
   // Get scopes from query parameter, e.g., ?scopes=drive.file,sheets.readonly

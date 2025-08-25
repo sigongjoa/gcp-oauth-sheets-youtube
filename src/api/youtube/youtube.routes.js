@@ -12,5 +12,6 @@ router.get('/videos', youtubeController.listVideos);
 router.put('/videos/:videoId', youtubeController.updateVideo);
 router.delete('/videos/:videoId', youtubeController.deleteVideo);
 router.get('/videos/:videoId/analyze', youtubeController.analyzeVideo);
+router.get('/videos/:videoId/analytics', youtubeController.getVideoAnalyticsMetrics);
 
 module.exports = router;
