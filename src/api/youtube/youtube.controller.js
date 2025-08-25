@@ -210,3 +210,33 @@ exports.deleteVideo = async (req, res) => {
     res.status(500).send('Failed to delete video.');
   }
 };
+
+exports.analyzeVideo = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).send('Unauthorized: User ID not found.');
+    }
+
+    const youtube = getYouTubeClient(userId);
+    const { videoId } = req.params;
+
+    if (!videoId) {
+      return res.status(400).send('Video ID is required.');
+    }
+
+    const response = await youtube.videos.list({
+      part: 'snippet,statistics,contentDetails,status', // Parts for analysis
+      id: videoId,
+    });
+
+    if (response.data.items.length === 0) {
+      return res.status(404).send('Video not found.');
+    }
+
+    res.status(200).json(response.data.items[0]);
+  } catch (error) {
+    console.error('Error analyzing video:', error.message);
+    res.status(500).send('Failed to analyze video.');
+  }
+};

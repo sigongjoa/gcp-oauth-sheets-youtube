@@ -25,11 +25,11 @@ app.use('/auth', authRoutes);
 const driveRoutes = require('./src/api/drive/drive.routes');
 app.use('/api/drive', driveRoutes);
 
-// const sheetsRoutes = require('./src/api/sheets/sheets.routes');
-// app.use('/api/sheets', sheetsRoutes);
+const sheetsRoutes = require('./src/api/sheets/sheets.routes');
+app.use('/api/sheets', sheetsRoutes);
 
-// const docsRoutes = require('./src/api/docs/docs.routes');
-// app.use('/api/docs', docsRoutes);
+const docsRoutes = require('./src/api/docs/docs.routes');
+app.use('/api/docs', docsRoutes);
 
 const youtubeRoutes = require('./src/api/youtube/youtube.routes');
 app.use('/api/youtube', youtubeRoutes);

@@ -40,6 +40,12 @@ const youtubeService = {
     const response = await api.delete(`/api/youtube/videos/${videoId}`);
     return response.data;
   },
+
+  // New function for video analysis
+  getVideoAnalysis: async (videoId: string) => {
+    const response = await api.get(`/api/youtube/videos/${videoId}/analyze`);
+    return response.data;
+  },
 };
 
 export default youtubeService;

@@ -9,8 +9,10 @@ exports.googleAuth = (req, res) => {
   const defaultScopes = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/documents',
   ];
 
   // Get scopes from query parameter, e.g., ?scopes=drive.file,sheets.readonly

@@ -15,6 +15,10 @@ function YouTubePage() {
   const [updateDescription, setUpdateDescription] = useState<string>('');
   const [updatePrivacyStatus, setUpdatePrivacyStatus] = useState<string>('private');
 
+  // State for video analysis modal
+  const [selectedVideoForAnalysis, setSelectedVideoForAnalysis] = useState<any | null>(null);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState<boolean>(false);
+
   const requiredScope = 'youtube'; // Corresponds to https://www.googleapis.com/auth/youtube
 
   useEffect(() => {
@@ -105,6 +109,24 @@ function YouTubePage() {
     }
   };
 
+  const handleAnalyzeVideo = async (videoId: string) => {
+    try {
+      setMessage('Fetching video analysis...');
+      const analysisData = await youtubeService.getVideoAnalysis(videoId);
+      setSelectedVideoForAnalysis(analysisData);
+      setIsAnalysisModalOpen(true);
+      setMessage('Video analysis loaded.');
+    } catch (error: any) {
+      console.error('Error fetching video analysis:', error);
+      setMessage(`Failed to fetch video analysis: ${error.response?.data || error.message}`);
+    }
+  };
+
+  const handleCloseAnalysisModal = () => {
+    setIsAnalysisModalOpen(false);
+    setSelectedVideoForAnalysis(null);
+  };
+
   return (
     <div>
       <h1>YouTube Integration</h1>
@@ -162,6 +184,7 @@ function YouTubePage() {
                         setUpdatePrivacyStatus(video.status?.privacyStatus || 'private');
                       }}>Edit</button>
                       <button onClick={() => handleDeleteVideo(video.id.videoId || video.id, video.snippet.title)}>Delete</button>
+                      <button onClick={() => handleAnalyzeVideo(video.id.videoId || video.id)}>Analyze</button>
                     </td>
                   </tr>
                 ))}
@@ -192,6 +215,43 @@ function YouTubePage() {
             </>
           )}
         </>
+      )}
+
+      {/* Video Analysis Modal */}
+      {isAnalysisModalOpen && selectedVideoForAnalysis && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            width: '80%',
+            maxWidth: '600px',
+            maxHeight: '80%',
+            overflowY: 'auto',
+            color: 'black' // Ensure text is visible on white background
+          }}>
+            <h2>Video Analysis: {selectedVideoForAnalysis.snippet.title}</h2>
+            <p><strong>Description:</strong> {selectedVideoForAnalysis.snippet.description}</p>
+            <p><strong>Published At:</strong> {new Date(selectedVideoForAnalysis.snippet.publishedAt).toLocaleString()}</p>
+            <p><strong>Views:</strong> {selectedVideoForAnalysis.statistics?.viewCount || 'N/A'}</p>
+            <p><strong>Likes:</strong> {selectedVideoForAnalysis.statistics?.likeCount || 'N/A'}</p>
+            <p><strong>Comments:</strong> {selectedVideoForAnalysis.statistics?.commentCount || 'N/A'}</p>
+            <p><strong>Privacy Status:</strong> {selectedVideoForAnalysis.status?.privacyStatus || 'N/A'}</p>
+            <p><strong>Tags:</strong> {selectedVideoForAnalysis.snippet.tags?.join(', ') || 'N/A'}</p>
+            <button onClick={handleCloseAnalysisModal}>Close</button>
+          </div>
+        </div>
       )}
     </div>
   );
