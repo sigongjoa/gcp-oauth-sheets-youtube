@@ -57,6 +57,20 @@ const youtubeService = {
     });
     return response.data;
   },
+
+  getComments: async (videoId: string) => {
+    const response = await api.get('/api/youtube/comments', {
+      params: { videoId },
+    });
+    return response.data;
+  },
+
+  updateComment: async (commentId: string, textOriginal: string) => {
+    const response = await api.put(`/api/youtube/comments/${commentId}`, {
+      textOriginal,
+    });
+    return response.data;
+  },
 };
 
 export default youtubeService;

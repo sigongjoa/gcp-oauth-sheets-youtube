@@ -3,34 +3,44 @@ import api from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  user: any | null; // Can be expanded with a proper User type
   login: (scopes?: string[]) => void;
   logout: () => void;
-  setAuthenticated: (status: boolean) => void; // Added for direct status update
+  setAuthenticated: (status: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<any | null>(null);
 
-  // Function to check authentication status with the backend
+  const fetchUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      setUser(null);
+    }
+  };
+
   const checkSession = async () => {
     try {
-      // Make a simple API call to a protected endpoint (e.g., /auth/status)
-      // If it succeeds, the user is authenticated.
-      // If it fails (e.g., 401), the user is not authenticated.
-      const response = await api.get('/auth/status'); // Need to create this endpoint in backend
+      const response = await api.get('/auth/status');
       if (response.status === 200) {
         setIsAuthenticated(true);
+        await fetchUser(); // Fetch user info if authenticated
       }
     } catch (error) {
       setIsAuthenticated(false);
+      setUser(null);
       console.error('Session check failed:', error);
     }
   };
 
   useEffect(() => {
-    checkSession(); // Check session on initial load
+    checkSession();
   }, []);
 
   const login = (scopes?: string[]) => {
@@ -43,17 +53,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    // In a real app, you would also call a backend endpoint to clear session
     setIsAuthenticated(false);
-    // Optionally redirect to login page
+    setUser(null);
+    // In a real app, you would also call a backend endpoint to clear the session
   };
 
   const setAuthenticated = (status: boolean) => {
     setIsAuthenticated(status);
+    if (!status) {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, setAuthenticated }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, setAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

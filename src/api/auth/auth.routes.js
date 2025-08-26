@@ -13,5 +13,6 @@ router.get('/success', (req, res) => {
 
 const authenticate = require('../../middleware/auth'); // Import authenticate middleware
 router.get('/status', authenticate, authController.checkAuthStatus);
+router.get('/me', authenticate, authController.getMe);
 
 module.exports = router;

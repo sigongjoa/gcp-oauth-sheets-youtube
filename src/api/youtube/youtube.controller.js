@@ -303,3 +303,65 @@ exports.getVideoAnalyticsMetrics = async (req, res) => {
     res.status(500).send('Failed to fetch video analytics metrics.');
   }
 };
+
+exports.listComments = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).send('Unauthorized: User ID not found.');
+    }
+
+    const youtube = getYouTubeClient(userId);
+    const { videoId, maxResults = 20 } = req.query;
+
+    if (!videoId) {
+      return res.status(400).send('Video ID is required.');
+    }
+
+    const response = await youtube.commentThreads.list({
+      part: 'snippet,replies',
+      videoId: videoId,
+      maxResults: maxResults,
+    });
+
+    res.status(200).json(response.data.items);
+  } catch (error) {
+    console.error('Error listing comments:', error.message);
+    res.status(500).send('Failed to list comments.');
+  }
+};
+
+exports.updateComment = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).send('Unauthorized: User ID not found.');
+    }
+
+    const youtube = getYouTubeClient(userId);
+    const { commentId } = req.params;
+    const { textOriginal } = req.body;
+
+    if (!commentId) {
+      return res.status(400).send('Comment ID is required.');
+    }
+    if (!textOriginal) {
+      return res.status(400).send('Comment text is required.');
+    }
+
+    const response = await youtube.comments.update({
+      part: 'snippet',
+      requestBody: {
+        id: commentId,
+        snippet: {
+          textOriginal: textOriginal,
+        },
+      },
+    });
+
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error updating comment:', error.message);
+    res.status(500).send('Failed to update comment.');
+  }
+};

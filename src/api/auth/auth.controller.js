@@ -10,7 +10,7 @@ exports.googleAuth = (req, res) => {
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/youtube.force-ssl',
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/documents',
     'https://www.googleapis.com/auth/yt-analytics.readonly',
@@ -44,8 +44,9 @@ exports.googleAuthCallback = async (req, res) => {
 
     console.log('Tokens received and stored:', tokens);
 
-    // Redirect to the frontend application's base URL
-    res.redirect('http://localhost:5174/'); // Assuming frontend runs on 5174
+    // Redirect to the frontend application's base URL, using environment variable
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173/';
+    res.redirect(frontendUrl);
   } catch (error) {
     console.error('Error retrieving access token:', error.message);
     res.status(500).send('Authentication failed');
@@ -72,3 +73,45 @@ exports.checkAuthStatus = (req, res) => {
   // So, the user is authenticated.
   res.status(200).send({ authenticated: true });
 };
+
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId || !tokensStore[userId]) {
+      return res.status(401).send('Unauthorized');
+    }
+
+    oauth2Client.setCredentials(tokensStore[userId]);
+
+    const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+
+    // Fetch YouTube Channel Info
+    const channelResponse = await youtube.channels.list({
+      mine: true,
+      part: 'id,snippet',
+    });
+
+    // Fetch Google User Info
+    const userInfoResponse = await oauth2.userinfo.get();
+
+    if (!channelResponse.data.items || channelResponse.data.items.length === 0) {
+      // This can happen if the user has a Google account but no YouTube channel.
+      // We can still return the basic user info.
+      return res.status(200).json(userInfoResponse.data);
+    }
+
+    const userProfile = {
+      ...userInfoResponse.data,
+      channelId: channelResponse.data.items[0].id,
+      channelTitle: channelResponse.data.items[0].snippet.title,
+      channelThumbnail: channelResponse.data.items[0].snippet.thumbnails.default.url,
+    };
+
+    res.status(200).json(userProfile);
+  } catch (error) {
+    console.error('Error fetching user profile:', error.message);
+    res.status(500).send('Failed to fetch user profile.');
+  }
+};
+
